@@ -2,12 +2,12 @@ import adafruit_rgb_display.st7789 as st7789
 import board
 import digitalio
 import neopixel
-import pyglet
+import pygame
 import time
 
 from IOPi import IOPi
 from PIL import Image, ImageDraw
-from ServoPi import Servo
+from .ServoPi import Servo
 
 """
     The dictionary below contains sets, each set should contain a key "images" and "timing"
@@ -106,7 +106,7 @@ NUM_PIXELS = 4
 ORDER = neopixel.RGB
 COLOR = colors["red"]
 CLEAR = colors["clear"]
-button_presses = 0
+led_button_presses = 0
 
 """
     Dictionary that contains the pin# for each servo data line and
@@ -152,8 +152,10 @@ audio_files = {
     "AUDIO_2": """ SET AUDIO FILE PATH """,
     "AUDIO_3": """ SET AUDIO FILE PATH """,
     "AUDIO_4": """ SET AUDIO FILE PATH """,
-    "AUDIO_5": """ SET AUDIO FILE PATH """
+    "AUDIO_5": """ SET AUDIO FILE PATH """,
+    "AUDIO_6": """ SET AUDIO FILE PATH """
 }
+audio_playing = False
 
 def init_ABE():
     # Create an instance of the IOPi class with an I2C address of 0x20
@@ -162,21 +164,19 @@ def init_ABE():
     servo = Servo(0x40)
 
     # Setting up input pins 1 = input
-    iobus.set_pin_direction(""" PIN# (Image Set 1 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Image Set 2 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Image Set 3 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (RGB LEDs Intensity PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Servo Position 1 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Servo Position 2 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Servo Position 3 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Audio 1 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Audio 2 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Audio 3 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Audio 4 PB) """, 1)
-    iobus.set_pin_direction(""" PIN# (Audio 5 PB) """, 1)
-
-    # Setting up output pins 0 = output
-    iobus.set_pin_direction(""" PIN# (RGB LEDs) """, 0)
+    iobus.set_pin_direction(2, 1)
+    iobus.set_pin_direction(10, 1)
+    iobus.set_pin_direction(16, 1)
+    iobus.set_pin_direction(3, 1)
+    iobus.set_pin_direction(1, 1)
+    iobus.set_pin_direction(7, 1)
+    iobus.set_pin_direction(15, 1)
+    iobus.set_pin_direction(5, 1)
+    iobus.set_pin_direction(6, 1)
+    iobus.set_pin_direction(11, 1)
+    iobus.set_pin_direction(9, 1)
+    iobus.set_pin_direction(14, 1)
+    iobus.set_pin_direction(4, 1)
 
     # Enable servo outputs
     servo.output_enable()
@@ -235,6 +235,9 @@ def init_LED():
     pixel.fill(colors["clear"])
     return pixel
 
+def init_Audio():
+    pygame.mixer.init()
+
 def scale_Image(image, width, height):
     # Scale the image to the smaller screen dimension
     image_ratio = image.width / image.height
@@ -255,10 +258,12 @@ def scale_Image(image, width, height):
     return image
 
 def play_Audio(audio):
-    # Loads media from path passed to load function and plays it
-    song = pyglet.media.load(audio)
-    song.play()
-    pyglet.app.run()
+    # Loads media and plays it
+    pygame.mixer.load(audio)
+    pygame.mixer.play()
+
+def pause_Audio(player):
+
 
 if __name__ == "__main__":
     # Will run the while loop contiuously unitl an error occurs
@@ -271,19 +276,20 @@ if __name__ == "__main__":
         disp = init_LCD()
         image, width, height = init_Image(disp)
         pixels = init_LED()
+        audio = init_Audio()
 
         while True:
             # Read each pin that has a button connected to it and determine if one or more of them have been pressed
-            if iobus.read_pin(""" PIN # (Image Set 1 PB) """) == 1:
+            if iobus.read_pin(2) == 1:
                 # Changes image set to Set 1
                 image_set = "SET_1"
-            elif iobus.read_pin(""" PIN # (Image Set 2 PB) """) == 1:
+            elif iobus.read_pin(10) == 1:
                 # Changes image set to Set 2
                 image_set = "SET_2"
-            elif iobus.read_pin(""" PIN # (Image Set 3 PB) """) == 1:
+            elif iobus.read_pin(16) == 1:
                 # Changes image set to Set 3
                 image_set = "SET_3"
-            elif iobus.read_pin(""" PIN# (RGB LEDs Intensity PB) """) == 1:
+            elif iobus.read_pin(3) == 1:
                 # Check to see if the button presses have gone through the 4 press cycle
                 # If this is the case reset button_presses to 0 wich is off
                 if button_presses < 3:
@@ -307,28 +313,48 @@ if __name__ == "__main__":
                     # Set rgb leds intensity level: HIGH
                     pixels.brightness = brightness["HIGH"]
                     pixels.fill(COLOR)
-            elif iobus.read_pin(""" PIN# (Servo Position 1 PB) """) == 1:
+            elif iobus.read_pin(1) == 1:
                 servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_1"]["Servo_1"])
                 servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_1"]["Servo_2"])
                 servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_1"]["Servo_3"])
-            elif iobus.read_pin(""" PIN# (Servo Position 2 PB) """) == 1:
+            elif iobus.read_pin(7) == 1:
                 servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_2"]["Servo_1"])
                 servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_2"]["Servo_2"])
                 servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_2"]["Servo_3"])
-            elif iobus.read_pin(""" PIN# (Servo Position 3 PB) """) == 1:
+            elif iobus.read_pin(15) == 1:
                 servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_3"]["Servo_1"])
                 servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_3"]["Servo_2"])
                 servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_3"]["Servo_3"])
-            elif iobus.read_pin(""" PIN# (Audio 1 PB) """) == 1:
-                play_Audio(audio_files["AUDIO_1"])
-            elif iobus.read_pin(""" PIN# (Audio 2 PB) """) == 1:
-                play_Audio(audio_files["AUDIO_2"])
-            elif iobus.read_pin(""" PIN# (Audio 3 PB) """) == 1:
-                play_Audio(audio_files["AUDIO_3"])
-            elif iobus.read_pin(""" PIN# (Audio 4 PB) """) == 1:
-                play_Audio(audio_files["AUDIO_4"])
-            elif iobus.read_pin(""" PIN# (Audio 5 PB) """) == 1:
-                play_Audio(audio_files["AUDIO_5"])
+            elif iobus.read_pin(5) == 1:
+                if pygame.mixer.get_busy():
+                    pause_Audio()
+                else:
+                    play_Audio(audio_files["AUDIO_1"])
+            elif iobus.read_pin(6) == 1:
+                if pygame.mixer.get_busy():
+                    pause_Audio()
+                else:
+                    play_Audio(audio_files["AUDIO_2"])
+            elif iobus.read_pin(11) == 1:
+                if pygame.mixer.get_busy():
+                    pause_Audio()
+                else:
+                    play_Audio(audio_files["AUDIO_3"])
+            elif iobus.read_pin(9) == 1:
+                if pygame.mixer.get_busy():
+                    pause_Audio()
+                else:
+                    play_Audio(audio_files["AUDIO_4"])
+            elif iobus.read_pin(14) == 1:
+                if pygame.mixer.get_busy():
+                    pause_Audio()
+                else:
+                    play_Audio(audio_files["AUDIO_5"])
+            elif iobus.read_pin(4) == 1:
+                if pygame.mixer.get_busy():
+                    pause_Audio()
+                else:
+                    play_Audio(audio_files["AUDIO_6"])
 
             # Displays each image in the image set with a delay between each image that is defined in the image_sets dictionary
             delay = 0
