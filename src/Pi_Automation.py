@@ -118,28 +118,55 @@ led_button_presses = 0
 """
 servos = {
     "Pin": {
-        "Servo_1": """ PIN# (Servo Data Line 1) """,
-        "Servo_2": """ PIN# (Servo Data Line 2) """,
-        "Servo_3": """ PIN# (Servo Data Line 3) """
+        "Servo_1": 1,
+        "Servo_2": 7,
+        "Servo_3": 15
     },
     "Angles": {
         "Setpoint_1": {
-            "Servo_1": """ 0-250 """,
-            "Servo_2": """ 0-250 """,
-            "Servo_3": """ 0-250 """
+            "Servo_1": """ 0-STEPS """,
+            "Servo_2": """ 0-STEPS """,
+            "Servo_3": """ 0-STEPS """
         },
         "Setpoint_2": {
-            "Servo_1": """ 0-250 """,
-            "Servo_2": """ 0-250 """,
-            "Servo_3": """ 0-250 """
+            "Servo_1": """ 0-STEPS """,
+            "Servo_2": """ 0-STEPS """,
+            "Servo_3": """ 0-STEPS """
         },
         "Setpoint_3": {
-            "Servo_1": """ 0-250 """,
-            "Servo_2": """ 0-250 """,
-            "Servo_3": """ 0-250 """
+            "Servo_1": """ 0-STEPS """,
+            "Servo_2": """ 0-STEPS """,
+            "Servo_3": """ 0-STEPS """
         }
     }
 }
+
+""" 
+    The move function from Servo class takes 3 arguments
+    move(Pin#, Position, Steps)
+    
+    Pin#: Pin that the data line of the servo is connected to
+    Position: Any number between 0-Steps
+    Steps: Can be any number between 0-4095
+        To increase servo speed decrease number of steps
+        To decrease servo speed increase number of steps
+"""
+STEPS = 250
+
+"""
+    The constructor for the Servo class takes 3 arguments
+    Servo(Address, Low_Limit, High_Limit)
+
+    Address: Constant of 0x40 if you only have one Servo PWM Pi card
+    Low_Limit: Limits the lower bound of rotation for the servo
+        If servo does not have full range of motion lower the low limit
+        by 0.1 until the servo does not respond anymore
+    High_Limit: Limits the higher bound of rotation for the servo
+        If the servo does not have a full range of motion increase the high limit
+        by 0.1 until the servo does not respond anymore
+"""
+LOW_LIMIT = 1.0
+HIGH_LIMIT = 2.0
 
 """
     Dictionary that conatains the paths to audio files that are to be played
@@ -159,18 +186,20 @@ audio_playing = False
 
 def init_ABE():
     # Create an instance of the IOPi class with an I2C address of 0x20
-    # Create an instance of the Servo class with an I2C address of 0x40
     iobus = IOPi(0x20)
-    servo = Servo(0x40)
+
+    # Create an instance of the Servo class with an I2C address of 0x40
+    # Servo(Address, Low_Limit, High_Limit)
+    # If servo is not getting full range of motion
+    #   Decrease low limit by 0.1 until servo does not move
+    #   Increase high limit by 0.1 until servo does not move
+    servo = Servo(0x40, LOW_LIMIT, HIGH_LIMIT)
 
     # Setting up input pins 1 = input
     iobus.set_pin_direction(2, 1)
     iobus.set_pin_direction(10, 1)
     iobus.set_pin_direction(16, 1)
     iobus.set_pin_direction(3, 1)
-    iobus.set_pin_direction(1, 1)
-    iobus.set_pin_direction(7, 1)
-    iobus.set_pin_direction(15, 1)
     iobus.set_pin_direction(5, 1)
     iobus.set_pin_direction(6, 1)
     iobus.set_pin_direction(11, 1)
@@ -262,8 +291,9 @@ def play_Audio(audio):
     pygame.mixer.load(audio)
     pygame.mixer.play()
 
-def pause_Audio(player):
-
+def pause_Audio():
+    # Pauses media that is playing
+    pygame.mixer.music.pause()
 
 if __name__ == "__main__":
     # Will run the while loop contiuously unitl an error occurs
@@ -276,7 +306,7 @@ if __name__ == "__main__":
         disp = init_LCD()
         image, width, height = init_Image(disp)
         pixels = init_LED()
-        audio = init_Audio()
+        init_Audio()
 
         while True:
             # Read each pin that has a button connected to it and determine if one or more of them have been pressed
@@ -292,39 +322,39 @@ if __name__ == "__main__":
             elif iobus.read_pin(3) == 1:
                 # Check to see if the button presses have gone through the 4 press cycle
                 # If this is the case reset button_presses to 0 wich is off
-                if button_presses < 3:
-                    button_presses += 1
+                if led_button_presses < 3:
+                    led_button_presses += 1
                 else:
-                    button_presses = 0
+                    led_button_presses = 0
 
-                if button_presses == 0:
+                if led_button_presses == 0:
                     # Set rgb leds off
                     pixels.brightness = brightness["OFF"]
                     pixels.fill(CLEAR)
-                elif button_presses == 1:
+                elif led_button_presses == 1:
                     # Set rgb leds intensity level: LOW
                     pixels.brightness = brightness["LOW"]
                     pixels.fill(COLOR)
-                elif button_presses == 2:
+                elif led_button_presses == 2:
                     # Set rgb leds intensity level: MEDIUM
                     pixels.brightness = brightness["MEDIUM"]
                     pixels.fill(COLOR)
-                elif button_presses == 3:
+                elif led_button_presses == 3:
                     # Set rgb leds intensity level: HIGH
                     pixels.brightness = brightness["HIGH"]
                     pixels.fill(COLOR)
             elif iobus.read_pin(1) == 1:
-                servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_1"]["Servo_1"])
-                servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_1"]["Servo_2"])
-                servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_1"]["Servo_3"])
+                servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_1"]["Servo_1"], STEPS)
+                servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_1"]["Servo_2"], STEPS)
+                servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_1"]["Servo_3"], STEPS)
             elif iobus.read_pin(7) == 1:
-                servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_2"]["Servo_1"])
-                servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_2"]["Servo_2"])
-                servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_2"]["Servo_3"])
+                servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_2"]["Servo_1"], STEPS)
+                servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_2"]["Servo_2"], STEPS)
+                servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_2"]["Servo_3"], STEPS)
             elif iobus.read_pin(15) == 1:
-                servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_3"]["Servo_1"])
-                servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_3"]["Servo_2"])
-                servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_3"]["Servo_3"])
+                servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_3"]["Servo_1"], STEPS)
+                servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_3"]["Servo_2"], STEPS)
+                servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_3"]["Servo_3"], STEPS)
             elif iobus.read_pin(5) == 1:
                 if pygame.mixer.get_busy():
                     pause_Audio()
