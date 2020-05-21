@@ -7,7 +7,7 @@ import time
 
 from IOPi import IOPi
 from PIL import Image, ImageDraw
-from .ServoPi import Servo
+from abeServo import Servo
 
 """
     The dictionary below contains sets, each set should contain a key "images" and "timing"
