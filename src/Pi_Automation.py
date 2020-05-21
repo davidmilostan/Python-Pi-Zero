@@ -101,7 +101,7 @@ brightness = {
     CLEAR -> Value for no color
     button_presses -> Integer value to keep track of how many times the button was pressed to determine brightness
 """
-PIXEL_PIN = """ PIN# (RGB LEDs) """
+PIXEL_PIN = board.D12
 NUM_PIXELS = 4
 ORDER = neopixel.RGB
 COLOR = colors["red"]
@@ -119,8 +119,8 @@ led_button_presses = 0
 servos = {
     "Pin": {
         "Servo_1": 1,
-        "Servo_2": 7,
-        "Servo_3": 15
+        "Servo_2": 2,
+        "Servo_3": 3
     },
     "Angles": {
         "Setpoint_1": {
@@ -200,6 +200,9 @@ def init_ABE():
     iobus.set_pin_direction(10, 1)
     iobus.set_pin_direction(16, 1)
     iobus.set_pin_direction(3, 1)
+    iobus.set_pin_direction(1, 1)
+    iobus.set_pin_direction(7, 1)
+    iobus.set_pin_direction(15, 1)
     iobus.set_pin_direction(5, 1)
     iobus.set_pin_direction(6, 1)
     iobus.set_pin_direction(11, 1)
@@ -301,7 +304,7 @@ if __name__ == "__main__":
     # the program will end gracefully this is done to give the user
     # a way to end the program without purposly crashing it 
     try:
-        # Initialize the expansion boards, the LCD display, image on the LCD, and the LEDs
+        # Initialize the expansion boards, the LCD display, image on the LCD, the LEDs, and the Audio
         iobus, servo = init_ABE()
         disp = init_LCD()
         image, width, height = init_Image(disp)
