@@ -101,7 +101,7 @@ brightness = {
     CLEAR -> Value for no color
     button_presses -> Integer value to keep track of how many times the button was pressed to determine brightness
 """
-PIXEL_PIN = board.D12
+PIXEL_PIN = board.D18
 NUM_PIXELS = 4
 ORDER = neopixel.RGB
 COLOR = colors["red"]
@@ -255,16 +255,18 @@ def init_LED():
     # Create an instance of the neopixel class assigning pin number, number of pixels,
     # initial brightness, auto writing rgb value when it changes (if False after pixels.Fill(color) -> pixels.Show() must be done),
     # and the order of the values (RGB, GRB, RGBW, or GRBW)
+    # Side note setting auto_write to True will cause errors
     pixel = neopixel.NeoPixel(
         PIXEL_PIN,
         NUM_PIXELS,
         brightness=0.0,
-        auto_write=True,
+        auto_write=False,
         pixel_order=ORDER
     )
 
     # Initalizing pixels to clear or no color
-    pixel.fill(colors["clear"])
+    pixel.fill(COLOR)
+    pixel.show()
     return pixel
 
 def init_Audio():
@@ -291,8 +293,8 @@ def scale_Image(image, width, height):
 
 def play_Audio(audio):
     # Loads media and plays it
-    pygame.mixer.load(audio)
-    pygame.mixer.play()
+    pygame.mixer.music.load(audio)
+    pygame.mixer.music.play()
 
 def pause_Audio():
     # Pauses media that is playing
@@ -333,19 +335,15 @@ if __name__ == "__main__":
                 if led_button_presses == 0:
                     # Set rgb leds off
                     pixels.brightness = brightness["OFF"]
-                    pixels.fill(CLEAR)
                 elif led_button_presses == 1:
                     # Set rgb leds intensity level: LOW
                     pixels.brightness = brightness["LOW"]
-                    pixels.fill(COLOR)
                 elif led_button_presses == 2:
                     # Set rgb leds intensity level: MEDIUM
                     pixels.brightness = brightness["MEDIUM"]
-                    pixels.fill(COLOR)
                 elif led_button_presses == 3:
                     # Set rgb leds intensity level: HIGH
                     pixels.brightness = brightness["HIGH"]
-                    pixels.fill(COLOR)
             elif iobus.read_pin(1) == 1:
                 servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_1"]["Servo_1"], STEPS)
                 servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_1"]["Servo_2"], STEPS)
@@ -392,7 +390,7 @@ if __name__ == "__main__":
             # Displays each image in the image set with a delay between each image that is defined in the image_sets dictionary
             delay = 0
             for key, value in image_sets[image_set][images].items():
-                image = Image.Open(value)
+                image = Image.open(value)
                 image = scale_Image(image, width, height)
 
                 disp.image(image)
