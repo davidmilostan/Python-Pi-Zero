@@ -4,6 +4,7 @@ import digitalio
 import neopixel
 import pygame
 import time
+import threading
 
 from IOPi import IOPi
 from PIL import Image, ImageDraw
@@ -300,21 +301,14 @@ def pause_Audio():
     # Pauses media that is playing
     pygame.mixer.music.pause()
 
-if __name__ == "__main__":
+def button_presses(iobus, servo, pixels):
+    global image_set, led_button_presses
     # Will run the while loop contiuously unitl an error occurs
     # if the error happens to be a keyboard interrupt (Ctrl+C) 
     # the program will end gracefully this is done to give the user
     # a way to end the program without purposly crashing it 
     try:
-        # Initialize the expansion boards, the LCD display, image on the LCD, the LEDs, and the Audio
-        iobus, servo = init_ABE()
-        disp = init_LCD()
-        image, width, height = init_Image(disp)
-        pixels = init_LED()
-        init_Audio()
-
-        while True:
-            # Read each pin that has a button connected to it and determine if one or more of them have been pressed
+        # Read each pin that has a button connected to it and determine if one or more of them have been pressed
             if iobus.read_pin(2) == 1:
                 # Changes image set to Set 1
                 image_set = "SET_1"
@@ -386,7 +380,16 @@ if __name__ == "__main__":
                     pause_Audio()
                 else:
                     play_Audio(audio_files["AUDIO_6"])
+    except KeyboardInterrupt:
+        pass
 
+def image_Loop(disp, image, width, height):
+    # Will run the while loop contiuously unitl an error occurs
+    # if the error happens to be a keyboard interrupt (Ctrl+C) 
+    # the program will end gracefully this is done to give the user
+    # a way to end the program without purposly crashing it 
+    try:
+        while True:
             # Displays each image in the image set with a delay between each image that is defined in the image_sets dictionary
             delay = 0
             for key, value in image_sets[image_set][images].items():
@@ -397,6 +400,27 @@ if __name__ == "__main__":
                 time.sleep(image_sets[image_set][timing][delay])
                 delay += 1
     except KeyboardInterrupt:
-        # Releases the pin that the neopixel LED is on
-        pixels.deinit()
         pass
+
+if __name__ == "__main__":
+    # Initialize the expansion boards, the LCD display, image on the LCD, the LEDs, and the Audio
+    iobus, servo = init_ABE()
+    disp = init_LCD()
+    image, width, height = init_Image(disp)
+    pixels = init_LED()
+    init_Audio()
+
+    # Create a thread to watch for button presses and one to constanly loop through the images
+    button_thread = threading.Thread(target=button_presses, args=(iobus, servo, pixels), name='button_thread')
+    image_thread = threading.Thread(target=image_Loop, args=(disp, image, width, height), name='image_thread')
+
+    # Start both threads
+    button_thread.start()
+    image_thread.start()
+
+    # Join the threads once they have completed to gracefully exit the program
+    button_thread.join()
+    image_thread.join()
+    
+    # Releases the pin that the neopixel LED is on
+    pixels.deinit()
