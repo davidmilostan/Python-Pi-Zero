@@ -188,7 +188,7 @@ audio_playing = False
 
 def init_ABE():
     # Create an instance of the IOPi class with an I2C address of 0x20
-    iobus = IOPi(0x20)
+    iobus = IOPi(0x21)
 
     # Create an instance of the Servo class with an I2C address of 0x40
     # Servo(Address, Low_Limit, High_Limit)
