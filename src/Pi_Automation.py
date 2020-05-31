@@ -119,8 +119,8 @@ led_button_presses = 0
 """
 servos = {
     "Pin": {
-        "Servo_1": 1,
-        "Servo_2": 2,
+        "Servo_1": 2,
+        "Servo_2": 1,
         "Servo_3": 3
     },
     "Angles": {
@@ -168,6 +168,7 @@ STEPS = 250
 """
 LOW_LIMIT = 1.0
 HIGH_LIMIT = 2.0
+current_setpoint = 1
 
 """
     Dictionary that conatains the paths to audio files that are to be played
@@ -196,20 +197,16 @@ def init_ABE():
     #   Increase high limit by 0.1 until servo does not move
     servo = Servo(0x40, LOW_LIMIT, HIGH_LIMIT)
 
-    # Setting up input pins 1 = input
-    iobus.set_pin_direction(2, 1)
-    iobus.set_pin_direction(10, 1)
-    iobus.set_pin_direction(16, 1)
-    iobus.set_pin_direction(3, 1)
-    iobus.set_pin_direction(1, 1)
-    iobus.set_pin_direction(7, 1)
-    iobus.set_pin_direction(15, 1)
-    iobus.set_pin_direction(5, 1)
-    iobus.set_pin_direction(6, 1)
-    iobus.set_pin_direction(11, 1)
-    iobus.set_pin_direction(9, 1)
-    iobus.set_pin_direction(14, 1)
-    iobus.set_pin_direction(4, 1)
+    # We will read the inputs 1 to 16 from the I/O bus so set port 0 and
+    # port 1 to be inputs and enable the internal pull-up resistors
+    iobus.set_port_direction(0, 0xFF)
+    iobus.set_port_pullups(0, 0xFF)
+
+    iobus.set_port_direction(1, 0xFF)
+    iobus.set_port_pullups(1, 0xFF)
+
+    iobus.invert_port(0, 0xFF)
+    iobus.invert_port(1, 0xFF)
 
     # Enable servo outputs
     servo.output_enable()
@@ -292,6 +289,68 @@ def scale_Image(image, width, height):
 
     return image
 
+def move_Servo(set_point):
+    if set_point == 1:
+        if current_setpoint == 2:
+            for step in range(servos["Angles"]["Setpoint_2"]["Servo_1"], servos["Angles"]["Setpoint_1"]["Servo_1"], -10):
+                servo.move(servos["Pin"]["Servo_1"], step, STEPS)
+
+            for step in range(servos["Angles"]["Setpoint_2"]["Servo_2"], servos["Angles"]["Setpoint_1"]["Servo_2"], -10):
+                servo.move(servos["Pin"]["Servo_2"], step, STEPS)
+            
+            for step in range(servos["Angles"]["Setpoint_2"]["Servo_3"], servos["Angles"]["Setpoint_1"]["Servo_3"], -10):
+                servo.move(servos["Pin"]["Servo_3"], step, STEPS)
+        elif current_setpoint == 3:
+            for step in range(servos["Angles"]["Setpoint_3"]["Servo_1"], servos["Angles"]["Setpoint_1"]["Servo_1"], -10):
+                servo.move(servos["Pin"]["Servo_1"], step, STEPS)
+            
+            for step in range(servos["Angles"]["Setpoint_3"]["Servo_2"], servos["Angles"]["Setpoint_1"]["Servo_2"], -10):
+                servo.move(servos["Pin"]["Servo_2"], step, STEPS)
+            
+            for step in range(servos["Angles"]["Setpoint_3"]["Servo_3"], servos["Angles"]["Setpoint_1"]["Servo_3"], -10):
+                servo.move(servos["Pin"]["Servo_3"], step, STEPS)
+    elif set_point == 2:
+        if current_setpoint == 1:
+            for step in range(servos["Angles"]["Setpoint_1"]["Servo_1"], servos["Angles"]["Setpoint_2"]["Servo_1"], 10):
+                servo.move(servos["Pin"]["Servo_1"], step, STEPS)
+            
+            for step in range(servos["Angles"]["Setpoint_1"]["Servo_2"], servos["Angles"]["Setpoint_2"]["Servo_2"], 10):
+                servo.move(servos["Pin"]["Servo_2"], step, STEPS)
+            
+            for step in range(servos["Angles"]["Setpoint_1"]["Servo_3"], servos["Angles"]["Setpoint_2"]["Servo_3"], 10):
+                servo.move(servos["Pin"]["Servo_3"], step, STEPS)
+        elif current_setpoint == 3:
+            for step in range(servos["Angles"]["Setpoint_3"]["Servo_1"], servos["Angles"]["Setpoint_2"]["Servo_1"], -10):
+                servo.move(servos["Pin"]["Servo_1"], step, STEPS)
+
+            for step in range(servos["Angles"]["Setpoint_3"]["Servo_2"], servos["Angles"]["Setpoint_2"]["Servo_2"], -10):
+                servo.move(servos["Pin"]["Servo_2"], step, STEPS)
+
+            for step in range(servos["Angles"]["Setpoint_3"]["Servo_3"], servos["Angles"]["Setpoint_2"]["Servo_3"], -10):
+                servo.move(servos["Pin"]["Servo_3"], step, STEPS)
+    elif set_point == 3:
+        if current_setpoint == 1:
+            for step in range(servos["Angles"]["Setpoint_1"]["Servo_1"], servos["Angles"]["Setpoint_3"]["Servo_1"], 10):
+                servo.move(servos["Pin"]["Servo_1"], step, STEPS)
+
+            for step in range(servos["Angles"]["Setpoint_1"]["Servo_2"], servos["Angles"]["Setpoint_3"]["Servo_2"], 10):
+                servo.move(servos["Pin"]["Servo_2"], step, STEPS)
+
+            for step in range(servos["Angles"]["Setpoint_1"]["Servo_3"], servos["Angles"]["Setpoint_3"]["Servo_3"], 10):
+                servo.move(servos["Pin"]["Servo_3"], step, STEPS)
+        elif current_setpoint == 2:
+            for step in range(servos["Angles"]["Setpoint_2"]["Servo_1"], servos["Angles"]["Setpoint_3"]["Servo_1"], 10):
+                servo.move(servos["Pin"]["Servo_1"], step, STEPS)
+
+            for step in range(servos["Angles"]["Setpoint_2"]["Servo_2"], servos["Angles"]["Setpoint_3"]["Servo_2"], 10):
+                servo.move(servos["Pin"]["Servo_2"], step, STEPS)
+
+            for step in range(servos["Angles"]["Setpoint_2"]["Servo_3"], servos["Angles"]["Setpoint_3"]["Servo_3"], 10):
+                servo.move(servos["Pin"]["Servo_3"], step, STEPS)
+    
+    return set_point
+    
+
 def play_Audio(audio):
     # Loads media and plays it
     pygame.mixer.music.load(audio)
@@ -308,78 +367,73 @@ def button_presses(iobus, servo, pixels):
     # the program will end gracefully this is done to give the user
     # a way to end the program without purposly crashing it 
     try:
-        # Read each pin that has a button connected to it and determine if one or more of them have been pressed
-            if iobus.read_pin(2) == 1:
-                # Changes image set to Set 1
-                image_set = "SET_1"
-            elif iobus.read_pin(10) == 1:
-                # Changes image set to Set 2
-                image_set = "SET_2"
-            elif iobus.read_pin(16) == 1:
-                # Changes image set to Set 3
-                image_set = "SET_3"
-            elif iobus.read_pin(3) == 1:
-                # Check to see if the button presses have gone through the 4 press cycle
-                # If this is the case reset button_presses to 0 wich is off
-                if led_button_presses < 3:
-                    led_button_presses += 1
-                else:
-                    led_button_presses = 0
+        while True:
+            # Read each pin that has a button connected to it and determine if one or more of them have been pressed
+                if iobus.read_pin(2) == 1:
+                    # Changes image set to Set 1
+                    image_set = "SET_1"
+                elif iobus.read_pin(10) == 1:
+                    # Changes image set to Set 2
+                    image_set = "SET_2"
+                elif iobus.read_pin(16) == 1:
+                    # Changes image set to Set 3
+                    image_set = "SET_3"
+                elif iobus.read_pin(3) == 1:
+                    # Check to see if the button presses have gone through the 4 press cycle
+                    # If this is the case reset button_presses to 0 wich is off
+                    if led_button_presses < 3:
+                        led_button_presses += 1
+                    else:
+                        led_button_presses = 0
 
-                if led_button_presses == 0:
-                    # Set rgb leds off
-                    pixels.brightness = brightness["OFF"]
-                elif led_button_presses == 1:
-                    # Set rgb leds intensity level: LOW
-                    pixels.brightness = brightness["LOW"]
-                elif led_button_presses == 2:
-                    # Set rgb leds intensity level: MEDIUM
-                    pixels.brightness = brightness["MEDIUM"]
-                elif led_button_presses == 3:
-                    # Set rgb leds intensity level: HIGH
-                    pixels.brightness = brightness["HIGH"]
-            elif iobus.read_pin(1) == 1:
-                servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_1"]["Servo_1"], STEPS)
-                servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_1"]["Servo_2"], STEPS)
-                servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_1"]["Servo_3"], STEPS)
-            elif iobus.read_pin(7) == 1:
-                servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_2"]["Servo_1"], STEPS)
-                servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_2"]["Servo_2"], STEPS)
-                servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_2"]["Servo_3"], STEPS)
-            elif iobus.read_pin(15) == 1:
-                servo.move(servos["Pin"]["Servo_1"], servos["Angles"]["Setpoint_3"]["Servo_1"], STEPS)
-                servo.move(servos["Pin"]["Servo_2"], servos["Angles"]["Setpoint_3"]["Servo_2"], STEPS)
-                servo.move(servos["Pin"]["Servo_3"], servos["Angles"]["Setpoint_3"]["Servo_3"], STEPS)
-            elif iobus.read_pin(5) == 1:
-                if pygame.mixer.get_busy():
-                    pause_Audio()
-                else:
-                    play_Audio(audio_files["AUDIO_1"])
-            elif iobus.read_pin(6) == 1:
-                if pygame.mixer.get_busy():
-                    pause_Audio()
-                else:
-                    play_Audio(audio_files["AUDIO_2"])
-            elif iobus.read_pin(11) == 1:
-                if pygame.mixer.get_busy():
-                    pause_Audio()
-                else:
-                    play_Audio(audio_files["AUDIO_3"])
-            elif iobus.read_pin(9) == 1:
-                if pygame.mixer.get_busy():
-                    pause_Audio()
-                else:
-                    play_Audio(audio_files["AUDIO_4"])
-            elif iobus.read_pin(14) == 1:
-                if pygame.mixer.get_busy():
-                    pause_Audio()
-                else:
-                    play_Audio(audio_files["AUDIO_5"])
-            elif iobus.read_pin(4) == 1:
-                if pygame.mixer.get_busy():
-                    pause_Audio()
-                else:
-                    play_Audio(audio_files["AUDIO_6"])
+                    if led_button_presses == 0:
+                        # Set rgb leds off
+                        pixels.brightness = brightness["OFF"]
+                    elif led_button_presses == 1:
+                        # Set rgb leds intensity level: LOW
+                        pixels.brightness = brightness["LOW"]
+                    elif led_button_presses == 2:
+                        # Set rgb leds intensity level: MEDIUM
+                        pixels.brightness = brightness["MEDIUM"]
+                    elif led_button_presses == 3:
+                        # Set rgb leds intensity level: HIGH
+                        pixels.brightness = brightness["HIGH"]
+                elif iobus.read_pin(1) == 1:
+                    current_setpoint = move_Servo(1)
+                elif iobus.read_pin(7) == 1:
+                    current_setpoint = move_Servo(2)
+                elif iobus.read_pin(15) == 1:
+                    current_setpoint = move_Servo(3)
+                elif iobus.read_pin(5) == 1:
+                    if pygame.mixer.get_busy():
+                        pause_Audio()
+                    else:
+                        play_Audio(audio_files["AUDIO_1"])
+                elif iobus.read_pin(6) == 1:
+                    if pygame.mixer.get_busy():
+                        pause_Audio()
+                    else:
+                        play_Audio(audio_files["AUDIO_2"])
+                elif iobus.read_pin(11) == 1:
+                    if pygame.mixer.get_busy():
+                        pause_Audio()
+                    else:
+                        play_Audio(audio_files["AUDIO_3"])
+                elif iobus.read_pin(9) == 1:
+                    if pygame.mixer.get_busy():
+                        pause_Audio()
+                    else:
+                        play_Audio(audio_files["AUDIO_4"])
+                elif iobus.read_pin(14) == 1:
+                    if pygame.mixer.get_busy():
+                        pause_Audio()
+                    else:
+                        play_Audio(audio_files["AUDIO_5"])
+                elif iobus.read_pin(4) == 1:
+                    if pygame.mixer.get_busy():
+                        pause_Audio()
+                    else:
+                        play_Audio(audio_files["AUDIO_6"])
     except KeyboardInterrupt:
         pass
 
@@ -421,6 +475,6 @@ if __name__ == "__main__":
     # Join the threads once they have completed to gracefully exit the program
     button_thread.join()
     image_thread.join()
-    
+
     # Releases the pin that the neopixel LED is on
     pixels.deinit()
